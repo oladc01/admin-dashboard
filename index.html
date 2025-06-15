@@ -143,22 +143,37 @@
       e.preventDefault();
       
       console.log("Form submitted"); // Debug log
+      console.log("Form data:", {
+        title: titleInput.value,
+        description: descInput.value,
+        price: priceInput.value,
+        hasFile: !!imageInput.files[0]
+      });
 
       const file = imageInput.files[0];
       if (!file) {
         showMessage("Please select an image", "error");
+        console.log("No file selected");
         return;
       }
+
+      console.log("File details:", {
+        name: file.name,
+        size: file.size,
+        type: file.type
+      });
 
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         showMessage("File size should be less than 5MB", "error");
+        console.log("File too large:", file.size);
         return;
       }
 
       // Validate file type
       if (!file.type.startsWith('image/')) {
         showMessage("Please select a valid image file", "error");
+        console.log("Invalid file type:", file.type);
         return;
       }
 
@@ -166,21 +181,31 @@
       submitBtn.disabled = true;
       submitBtn.textContent = "Posting...";
       loadingIndicator.classList.remove('hidden');
+      showMessage("Uploading image...", "info");
 
       try {
         console.log("Starting upload process"); // Debug log
         
+        // Test Firebase connection first
+        console.log("Testing Firebase connection...");
+        console.log("Storage instance:", storage);
+        console.log("Firestore instance:", db);
+        
         // Upload image to Firebase Storage
         const timestamp = Date.now();
-        const fileName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-        const imageRef = ref(storage, `productImages/${fileName}`);
+        const fileName = ${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')};
+        const imageRef = ref(storage, productImages/${fileName});
         
-        console.log("Uploading file:", fileName); // Debug log
+        console.log("Created storage reference:", imageRef);
+        console.log("Uploading file:", fileName);
+        
+        showMessage("Uploading to Firebase Storage...", "info");
         const uploadResult = await uploadBytes(imageRef, file);
-        console.log("Upload successful:", uploadResult); // Debug log
+        console.log("Upload successful:", uploadResult);
         
+        showMessage("Getting download URL...", "info");
         const imageURL = await getDownloadURL(imageRef);
-        console.log("Got download URL:", imageURL); // Debug log
+        console.log("Got download URL:", imageURL);
 
         // Add product to Firestore
         const productData = {
@@ -192,17 +217,32 @@
           updatedAt: new Date()
         };
 
-        console.log("Adding product to Firestore:", productData); // Debug log
+        console.log("Adding product to Firestore:", productData);
+        showMessage("Saving product data...", "info");
+        
         const docRef = await addDoc(productsCol, productData);
-        console.log("Product added with ID:", docRef.id); // Debug log
+        console.log("Product added with ID:", docRef.id);
 
         // Reset form and show success
         productForm.reset();
         showMessage("Product posted successfully!", "success");
         
       } catch (err) {
-        console.error("Error posting product:", err);
-        showMessage(`Failed to post product: ${err.message}`, "error");
+        console.error("Detailed error:", err);
+        console.error("Error name:", err.name);
+        console.error("Error message:", err.message);
+        console.error("Error code:", err.code);
+        console.error("Error stack:", err.stack);
+        
+        let errorMessage = "Failed to post product";
+        if (err.code) {
+          errorMessage += ` (${err.code})`;
+        }
+        if (err.message) {
+          errorMessage += : ${err.message};
+        }
+        
+        showMessage(errorMessage, "error");
       } finally {
         // Reset button state
         submitBtn.disabled = false;
@@ -276,6 +316,35 @@
 
     // Initialize the app
     console.log("Initializing app"); // Debug log
+    
+    // Test Firebase connection immediately
+    async function testFirebaseConnection() {
+      try {
+        console.log("Testing Firebase initialization...");
+        console.log("App:", app);
+        console.log("Database:", db);
+        console.log("Storage:", storage);
+        
+        // Test Firestore connection
+        console.log("Testing Firestore connection...");
+        const testQuery = await getDocs(productsCol);
+        console.log("Firestore test successful. Found", testQuery.size, "products");
+        
+        showMessage("Firebase connected successfully", "success");
+        
+      } catch (error) {
+        console.error("Firebase connection test failed:", error);
+        console.error("Error details:", {
+          name: error.name,
+          message: error.message,
+          code: error.code
+        });
+        showMessage(Firebase connection failed: ${error.message}, "error");
+      }
+    }
+    
+    // Run connection test
+    testFirebaseConnection();
     renderProducts();
 
     // Expose functions globally so onclick handlers work
