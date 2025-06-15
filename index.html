@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -13,55 +14,68 @@
       <h2 class="text-2xl font-bold mb-6">Admin Panel</h2>
       <nav>
         <ul class="space-y-4">
-          <li><a href="streetwear24-7.netlify.app" class="hover:text-yellow-400">Dashboard</a></li>
+          <li><a href="https://streetwear24-7.netlify.app" class="hover:text-yellow-400">Dashboard</a></li>
           <li><a href="#post" class="hover:text-yellow-400">Post Product</a></li>
           <li><a href="#manage" class="hover:text-yellow-400">Manage Products</a></li>
         </ul>
       </nav>
     </aside>
-        
-    <main class="flex-1 p-6 overflow-y-auto">
-      <header class="mb-6">
-        <h1 class="text-3xl font-bold">Streetwear Product Manager</h1>
-      </header>
 
-      
-      <section id="post" class="bg-white p-6 rounded shadow mb-10">
-        <h2 class="text-xl font-semibold mb-4">Post New Product</h2>
-        <form id="productForm" class="space-y-4">
-          <input id="title" type="text" placeholder="Product Title" class="w-full p-3 border rounded" required />
-          <input id="desc" type="text" placeholder="Description" class="w-full p-3 border rounded" required />
-          <input id="price" type="number" placeholder="Price (₦)" class="w-full p-3 border rounded" required />
-          <input id="image" type="file" accept="image/*" class="w-full p-3 border rounded" required />
-          <button type="submit" class="bg-black text-white px-6 py-2 rounded hover:bg-gray-800">Post Product</button>
-        </form>
-      </section>
 
-     
-      <section id="manage" class="bg-white p-6 rounded shadow">
-        <h2 class="text-xl font-semibold mb-4">Manage Products</h2>
-        <div class="overflow-x-auto">
-          <table class="min-w-full table-auto">
-            <thead>
-              <tr class="bg-gray-200 text-left">
-                <th class="p-3">Image</th>
-                <th class="p-3">Title</th>
-                <th class="p-3">Price</th>
-                <th class="p-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="productTable">
-              <!-- Product rows inserted dynamically -->
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </main>
+<main class="flex-1 p-6 overflow-y-auto">
+  <header class="mb-6">
+    <h1 class="text-3xl font-bold">Streetwear Product Manager</h1>
+  </header>
+
+  <!-- Loading indicator -->
+  <div id="loadingIndicator" class="hidden bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
+    <span>Processing...</span>
+  </div>
+
+  <!-- Error/Success messages -->
+  <div id="messageContainer" class="mb-4"></div>
+  
+  <section id="post" class="bg-white p-6 rounded shadow mb-10">
+    <h2 class="text-xl font-semibold mb-4">Post New Product</h2>
+    <form id="productForm" class="space-y-4">
+      <input id="title" type="text" placeholder="Product Title" class="w-full p-3 border rounded" required />
+      <textarea id="desc" placeholder="Description" class="w-full p-3 border rounded h-24" required></textarea>
+      <input id="price" type="number" placeholder="Price (₦)" class="w-full p-3 border rounded" min="1" required />
+      <input id="image" type="file" accept="image/*" class="w-full p-3 border rounded" required />
+      <button type="submit" id="submitBtn" class="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed">
+        Post Product
+      </button>
+    </form>
+  </section>
+
+ 
+  <section id="manage" class="bg-white p-6 rounded shadow">
+    <h2 class="text-xl font-semibold mb-4">Manage Products</h2>
+    <div class="overflow-x-auto">
+      <table class="min-w-full table-auto">
+        <thead>
+          <tr class="bg-gray-200 text-left">
+            <th class="p-3">Image</th>
+            <th class="p-3">Title</th>
+            <th class="p-3">Description</th>
+            <th class="p-3">Price</th>
+            <th class="p-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="productTable">
+          <!-- Product rows inserted dynamically -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+
   </div>
 
   <script type="module">
     // Import Firebase modules
-   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
     import {
       getFirestore,
       collection,
@@ -69,7 +83,8 @@
       getDocs,
       deleteDoc,
       doc,
-      onSnapshot
+      onSnapshot,
+      updateDoc
     } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
 
     import {
@@ -80,90 +95,196 @@
     } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-storage.js";
 
     
-  const firebaseConfig = {
-  apiKey: "AIzaSyCGg7yqLwDAU3gBmfx3WQqVRWN5rp6TkFQ",
-  authDomain: "streetwear24-7.firebaseapp.com",
-  projectId: "streetwear24-7",
-  storageBucket: "streetwear24-7.firebasestorage.app",
-  messagingSenderId: "722353621637",
-  appId: "1:722353621637:web:b8be5335cd89befd55b7ec"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyCGg7yqLwDAU3gBmfx3WQqVRWN5rp6TkFQ",
+      authDomain: "streetwear24-7.firebaseapp.com",
+      projectId: "streetwear24-7",
+      storageBucket: "streetwear24-7.firebasestorage.app",
+      messagingSenderId: "722353621637",
+      appId: "1:722353621637:web:b8be5335cd89befd55b7ec"
+    };
 
+    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const storage = getStorage(app);
     const productsCol = collection(db, "products");
 
+    // Get DOM elements
     const productForm = document.getElementById("productForm");
     const titleInput = document.getElementById("title");
     const descInput = document.getElementById("desc");
     const priceInput = document.getElementById("price");
     const imageInput = document.getElementById("image");
     const productTable = document.getElementById("productTable");
+    const submitBtn = document.getElementById("submitBtn");
+    const loadingIndicator = document.getElementById("loadingIndicator");
+    const messageContainer = document.getElementById("messageContainer");
 
+    // Show message function
+    function showMessage(message, type = 'info') {
+      const alertClass = type === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 
+                        type === 'error' ? 'bg-red-100 border-red-400 text-red-700' : 
+                        'bg-blue-100 border-blue-400 text-blue-700';
+      
+      messageContainer.innerHTML = `
+        <div class="${alertClass} px-4 py-3 rounded border">
+          ${message}
+        </div>
+      `;
+      
+      setTimeout(() => {
+        messageContainer.innerHTML = '';
+      }, 5000);
+    }
+
+    // Handle form submission
     productForm.addEventListener("submit", async (e) => {
       e.preventDefault();
+      
+      console.log("Form submitted"); // Debug log
 
       const file = imageInput.files[0];
-      if (!file) return alert("Please select an image");
+      if (!file) {
+        showMessage("Please select an image", "error");
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        showMessage("File size should be less than 5MB", "error");
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        showMessage("Please select a valid image file", "error");
+        return;
+      }
+
+      // Show loading state
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Posting...";
+      loadingIndicator.classList.remove('hidden');
 
       try {
+        console.log("Starting upload process"); // Debug log
+        
         // Upload image to Firebase Storage
-        const imageRef = ref(storage, `productImages/${Date.now()}_${file.name}`);
-        await uploadBytes(imageRef, file);
+        const timestamp = Date.now();
+        const fileName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+        const imageRef = ref(storage, `productImages/${fileName}`);
+        
+        console.log("Uploading file:", fileName); // Debug log
+        const uploadResult = await uploadBytes(imageRef, file);
+        console.log("Upload successful:", uploadResult); // Debug log
+        
         const imageURL = await getDownloadURL(imageRef);
+        console.log("Got download URL:", imageURL); // Debug log
 
-        await addDoc(productsCol, {
-          title: titleInput.value,
-          description: descInput.value,
-          price: Number(priceInput.value),
+        // Add product to Firestore
+        const productData = {
+          title: titleInput.value.trim(),
+          description: descInput.value.trim(),
+          price: parseInt(priceInput.value),
           imageUrl: imageURL,
-          createdAt: new Date()
-        });
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
 
+        console.log("Adding product to Firestore:", productData); // Debug log
+        const docRef = await addDoc(productsCol, productData);
+        console.log("Product added with ID:", docRef.id); // Debug log
+
+        // Reset form and show success
         productForm.reset();
-        alert("Product posted!");
+        showMessage("Product posted successfully!", "success");
+        
       } catch (err) {
         console.error("Error posting product:", err);
-        alert("Failed to post product");
+        showMessage(`Failed to post product: ${err.message}`, "error");
+      } finally {
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Post Product";
+        loadingIndicator.classList.add('hidden');
       }
     });
 
+    // Render products in table
     function renderProducts() {
+      console.log("Setting up product listener"); // Debug log
+      
       onSnapshot(productsCol, (snapshot) => {
+        console.log("Products updated, count:", snapshot.size); // Debug log
         productTable.innerHTML = "";
+        
+        if (snapshot.empty) {
+          productTable.innerHTML = `
+            <tr>
+              <td colspan="5" class="p-4 text-center text-gray-500">No products found</td>
+            </tr>
+          `;
+          return;
+        }
+        
         snapshot.forEach((docSnap) => {
           const data = docSnap.data();
           const row = document.createElement("tr");
+          row.className = "border-b hover:bg-gray-50";
           row.innerHTML = `
-            <td class="p-3"><img src="${data.imageUrl}" class="w-12 h-12 object-cover" /></td>
-            <td class="p-3">${data.title}</td>
-            <td class="p-3">₦${data.price}</td>
+            <td class="p-3">
+              <img src="${data.imageUrl}" alt="${data.title}" class="w-12 h-12 object-cover rounded" 
+                   onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMCAyN0M5IDI3IDkgMTMgMjAgMTNDMzEgMTMgMzEgMjcgMjAgMjdaIiBzdHJva2U9IiM5Q0E0QUYiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4K'" />
+            </td>
+            <td class="p-3 font-medium">${data.title || 'N/A'}</td>
+            <td class="p-3 text-sm text-gray-600 max-w-xs truncate">${data.description || 'N/A'}</td>
+            <td class="p-3 font-semibold">₦${data.price ? data.price.toLocaleString() : '0'}</td>
             <td class="p-3 space-x-2">
-              <button class="bg-blue-500 text-white px-3 py-1 rounded" onclick="editProduct('${docSnap.id}')">Edit</button>
-              <button class="bg-red-500 text-white px-3 py-1 rounded" onclick="deleteProduct('${docSnap.id}')">Delete</button>
+              <button class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600" 
+                      onclick="editProduct('${docSnap.id}')">Edit</button>
+              <button class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600" 
+                      onclick="deleteProduct('${docSnap.id}')">Delete</button>
             </td>
           `;
           productTable.appendChild(row);
         });
+      }, (error) => {
+        console.error("Error loading products:", error);
+        showMessage("Error loading products", "error");
       });
     }
 
-    renderProducts();
-
-    function deleteProduct(id) {
+    // Delete product function
+    async function deleteProduct(id) {
       if (confirm("Are you sure you want to delete this product?")) {
-        deleteDoc(doc(db, "products", id))
-          .then(() => console.log("Product deleted"))
-          .catch((err) => console.error("Error deleting:", err));
+        try {
+          await deleteDoc(doc(db, "products", id));
+          showMessage("Product deleted successfully", "success");
+        } catch (err) {
+          console.error("Error deleting:", err);
+          showMessage("Failed to delete product", "error");
+        }
       }
     }
 
-    // Expose globally
-    window.deleteProduct = deleteProduct;
+    // Edit product function (placeholder for now)
+    function editProduct(id) {
+      showMessage("Edit functionality coming soon!", "info");
+      // You can implement edit functionality here later
+    }
 
-    // Placeholder for editProduct (future enhancement)
-    window.editProduct = (id) => alert(`Edit not implemented yet for ID: ${id}`);
+    // Initialize the app
+    console.log("Initializing app"); // Debug log
+    renderProducts();
+
+    // Expose functions globally so onclick handlers work
+    window.deleteProduct = deleteProduct;
+    window.editProduct = editProduct;
+
+    // Test Firebase connection
+    console.log("Firebase initialized successfully");
   </script>
+
 </body>
 </html>
